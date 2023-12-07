@@ -1,23 +1,24 @@
 // Copyright (C) 2023  Intel Corporation. All rights reserved.
-// Your use of Intel Corporation's design tools, logic functions 
-// and other software and tools, and any partner logic 
-// functions, and any output files from any of the foregoing 
-// (including device programming or simulation files), and any 
-// associated documentation or information are expressly subject 
-// to the terms and conditions of the Intel Program License 
-// Subscription Agreement, the Intel Quartus Prime License Agreement,
-// the Intel FPGA IP License Agreement, or other applicable license
-// agreement, including, without limitation, that your use is for
-// the sole purpose of programming logic devices manufactured by
-// Intel and sold by Intel or its authorized distributors.  Please
-// refer to the applicable agreement for further details, at
-// https://fpgasoftware.intel.com/eula.
 
-// PROGRAM		"Quartus Prime"
-// VERSION		"Version 22.1std.2 Build 922 07/20/2023 SC Lite Edition"
-// CREATED		"Sat Oct 28 22:40:54 2023"
+`include "adder4.v"
+`include "alu.v"
+`include "aluCON.v"
+`include "bmux2to1.v"
+`include "control_unit.v"
+`include "data_memory.v"
+`include "extract_reg_addr.v"
+`include "IR.v"
+`include "jumpMUX.v"
+`include "jumpshift.v"
+`include "mux2to1.v"
+`include "PC_reg.v"
+`include "register_file.v"
+`include "sing_extend.v"
+`include "write_reg_MUX.v"
 
-module mip32_b(
+
+
+module mip32(
 	clk,
 	reset
 );
@@ -26,128 +27,167 @@ module mip32_b(
 input wire	clk;
 input wire	reset;
 
-wire	[7:0] SYNTHESIZED_WIRE_28;
-wire	[31:0] SYNTHESIZED_WIRE_1;
-wire	SYNTHESIZED_WIRE_2;
-wire	[4:0] SYNTHESIZED_WIRE_3;
-wire	[4:0] SYNTHESIZED_WIRE_4;
-wire	[4:0] SYNTHESIZED_WIRE_5;
-wire	[31:0] SYNTHESIZED_WIRE_6;
-wire	[31:0] SYNTHESIZED_WIRE_29;
-wire	SYNTHESIZED_WIRE_8;
-wire	[3:0] SYNTHESIZED_WIRE_11;
-wire	[31:0] SYNTHESIZED_WIRE_12;
-wire	[31:0] SYNTHESIZED_WIRE_13;
-wire	[2:0] SYNTHESIZED_WIRE_14;
-wire	SYNTHESIZED_WIRE_17;
-wire	SYNTHESIZED_WIRE_18;
-wire	[31:0] SYNTHESIZED_WIRE_30;
-wire	[31:0] SYNTHESIZED_WIRE_31;
-wire	SYNTHESIZED_WIRE_22;
-wire	[31:0] SYNTHESIZED_WIRE_24;
-wire	SYNTHESIZED_WIRE_25;
-wire	[31:0] SYNTHESIZED_WIRE_27;
+wire	[31:0] next_instruction;
+wire	reg_write;
+wire	[4:0] read_address_1;
+wire	[4:0] read_address_2;
+wire	[4:0] write_address;
+wire	[31:0] write_data;
+wire	[31:0] instruction;
+wire	[1:0] reg_dest;
+wire	branch_yes;
+wire	branch;
+wire	[31:0] address_p_4;
+wire	[31:0] sign_extended;
+wire	[31:0] address_branch;
+wire	[1:0] jump;
+wire	[31:0] new_address;
+wire	[31:0] read_data_1;
+wire	pc_to_reg;
+wire	[31:0] write_back;
+wire	[7:0] intruct_address;
+wire	[3:0] alu_control;
+wire	[31:0] alu_in_2;
+wire	[3:0] aluop;
+wire	mem_read;
+wire	mem_write;
+wire	[31:0] alu_res;
+wire	[31:0] read_data_2;
+wire	alusrc;
+wire	mem_to_reg;
+wire	[31:0] Dmemory_to_mux;
 
 
 
 
 
-IR	b2v_inst(
-	.address(SYNTHESIZED_WIRE_28),
-	.data(SYNTHESIZED_WIRE_29));
-
-
-PC_reg	b2v_inst1(
+PC_reg	pc_reg(
 	.clock(clk),
 	.reset(reset),
-	.data_in1(SYNTHESIZED_WIRE_1),
-	.data_out(SYNTHESIZED_WIRE_28));
+	.data_in1(next_instruction),
+	.data_out(intruct_address));
 
 
-register_file	b2v_inst10(
-	.reg_write(SYNTHESIZED_WIRE_2),
+register_file	rf(
+	.reg_write(reg_write),
 	.clk(clk),
 	.reset(reset),
-	.read_addr_1(SYNTHESIZED_WIRE_3),
-	.read_addr_2(SYNTHESIZED_WIRE_4),
-	.write_addr(SYNTHESIZED_WIRE_5),
-	.write_data(SYNTHESIZED_WIRE_6),
-	.read_data_1(SYNTHESIZED_WIRE_12),
-	.read_data_2(SYNTHESIZED_WIRE_31));
+	.read_addr_1(read_address_1),
+	.read_addr_2(read_address_2),
+	.write_addr(write_address),
+	.write_data(write_data),
+	.read_data_1(read_data_1),
+	.read_data_2(read_data_2));
 
 
-sign_extension	b2v_inst11(
-	.IR(SYNTHESIZED_WIRE_29),
-	.sign_out(SYNTHESIZED_WIRE_24));
+sign_extension	signEx(
+	.IR(instruction),
+	.sign_out(sign_extended));
 
 
-write_reg_MUX	b2v_inst12(
-	.select1(SYNTHESIZED_WIRE_8),
-	.data(SYNTHESIZED_WIRE_29),
-	.outputdata(SYNTHESIZED_WIRE_5));
+write_reg_MUX	write_reg_M(
+	.data(instruction),
+	.select1(reg_dest),
+	.outputdata(write_address));
 
 
-adder4	b2v_inst2(
-	.A(SYNTHESIZED_WIRE_28),
-	.add_out(SYNTHESIZED_WIRE_1));
+bmux2to1	Bmux(
+	.branchYes(branch_yes),
+	.branch(branch),
+	.add_out(address_p_4),
+	.target(sign_extended),
+	.addressBranch(address_branch));
 
 
-alu	b2v_inst3(
-	.aluCON(SYNTHESIZED_WIRE_11),
-	.In1(SYNTHESIZED_WIRE_12),
-	.In2(SYNTHESIZED_WIRE_13),
+jumpMux	Jmux(
+	.addressBranch(address_branch),
+	.jump(jump),
+	.newAddr(new_address),
+	.reg_value(read_data_1),
+	.newPc(next_instruction));
+
+
+jumpShift	Jshift(
+	.pcin(address_p_4),
+	.target1(instruction),
+	.newAddr(new_address));
+
+
+mux2to1	write_back_M(
+	.select1(pc_to_reg),
+	.data1(write_back),
+	.data2(address_p_4),
+	.outputdata(write_data));
+
+
+adder4	add4(
+	.A(intruct_address),
+	.add_out(address_p_4));
+
+
+alu	ALU(
+	.aluCON(alu_control),
+	.In1(read_data_1),
+	.In2(alu_in_2),
+	.branchYes(branch_yes),
 	
-	
-	.result(SYNTHESIZED_WIRE_30));
+	.result(alu_res));
 
 
-aluCON	b2v_inst4(
-	.aluop(SYNTHESIZED_WIRE_14),
-	.IR(SYNTHESIZED_WIRE_29),
-	.out_to_alu(SYNTHESIZED_WIRE_11));
+aluCON	alu_con(
+	.aluop(aluop),
+	.IR(instruction),
+	.out_to_alu(alu_control));
 
 
-control_unit	b2v_inst5(
-	.IR(SYNTHESIZED_WIRE_29),
-	.reg_dest(SYNTHESIZED_WIRE_8),
-	
-	
-	.mem_read(SYNTHESIZED_WIRE_17),
-	.mem_to_reg(SYNTHESIZED_WIRE_25),
-	.mem_write(SYNTHESIZED_WIRE_18),
-	.alusrc(SYNTHESIZED_WIRE_22),
-	.reg_write(SYNTHESIZED_WIRE_2),
-	.aluop(SYNTHESIZED_WIRE_14));
+control_unit	con_unit(
+	.IR(instruction),
+	.branch(branch),
+	.mem_read(mem_read),
+	.mem_to_reg(mem_to_reg),
+	.pc_to_reg(pc_to_reg),
+	.mem_write(mem_write),
+	.alusrc(alusrc),
+	.reg_write(reg_write),
+	.aluop(aluop),
+	.jump(jump),
+	.reg_dest(reg_dest));
 
 
-data_memory	b2v_inst6(
+data_memory	Dmemory(
 	.clk(clk),
 	.reset(reset),
-	.mem_read(SYNTHESIZED_WIRE_17),
-	.mem_write(SYNTHESIZED_WIRE_18),
-	.addr(SYNTHESIZED_WIRE_30),
-	.write_data(SYNTHESIZED_WIRE_31),
-	.read_data(SYNTHESIZED_WIRE_27));
+	.mem_read(mem_read),
+	.mem_write(mem_write),
+	.addr(alu_res),
+	.write_data(read_data_2),
+	.read_data(Dmemory_to_mux));
 
 
-extract_reg_adrr	b2v_inst7(
-	.IR(SYNTHESIZED_WIRE_29),
-	.addr1(SYNTHESIZED_WIRE_3),
-	.addr2(SYNTHESIZED_WIRE_4));
+extract_reg_adrr	extract_adrr(
+	.IR(instruction),
+	.addr1(read_address_1),
+	.addr2(read_address_2));
 
 
-mux2to1	b2v_inst8(
-	.select1(SYNTHESIZED_WIRE_22),
-	.data1(SYNTHESIZED_WIRE_31),
-	.data2(SYNTHESIZED_WIRE_24),
-	.outputdata(SYNTHESIZED_WIRE_13));
+mux2to1	alu_src_mux(
+	.select1(alusrc),
+	.data1(read_data_2),
+	.data2(sign_extended),
+	.outputdata(alu_in_2));
 
 
-mux2to1	b2v_inst9(
-	.select1(SYNTHESIZED_WIRE_25),
-	.data1(SYNTHESIZED_WIRE_30),
-	.data2(SYNTHESIZED_WIRE_27),
-	.outputdata(SYNTHESIZED_WIRE_6));
+mux2to1	Dmemory_mux(
+	.select1(mem_to_reg),
+	.data1(alu_res),
+	.data2(Dmemory_to_mux),
+	.outputdata(write_back));
+
+
+IR	instruction_memory(
+	.address(intruct_address),
+	.data(instruction));
 
 
 endmodule
+
