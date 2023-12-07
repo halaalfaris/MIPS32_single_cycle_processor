@@ -1,4 +1,5 @@
 
+
 module data_memory (addr, write_data, read_data, clk, reset, mem_read, mem_write);
 	input [31:0] addr;
 	input [31:0] write_data;
