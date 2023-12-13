@@ -134,13 +134,41 @@ adder4	add4(
 	.A(intruct_address),
 	.add_out(address_p_4));
 
-
+IDEX ID_EX(
+	//inputs
+	.clock(clk), 
+	.reset(reset),
+	.ibranch(branch),
+	.ijump(jump),
+	.imem_read(mem_read),
+	.imem_to_reg(mem_to_reg),
+	.ipc_to_reg(pc_to_reg,
+	.imem_write(mem_write),
+	.ialusrc(alusrc),
+	.ireg_write(reg_write),
+	//inputs part2
+	.iPC(PC_IFID),
+	.iIR(instruction_IFID),
+	.iread_data1(read_data_1),
+	.iread_data2(read_data_2),
+	.isign_ext(sign_extended),
+	//outputs
+	//execute
+				.oalusrc(),
+				.obranch(), //might not be needed
+				.ojump(), //might not be needed
+				//write back and memory
+				.omem_read(),
+				.omem_to_reg(),
+				.opc_to_reg(),
+				.omem_write(),
+				.oreg_write(),
+		    
 alu	ALU(
 	.aluCON(alu_control),
 	.In1(read_data_1),
 	.In2(alu_in_2),
 	.branchYes(branch_yes),
-	
 	.result(alu_res));
 
 //inputs will change
