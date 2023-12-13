@@ -56,8 +56,9 @@ wire	[31:0] read_data_2;
 wire	alusrc;
 wire	mem_to_reg;
 wire	[31:0] Dmemory_to_mux;
-
-
+wire	[31:0] instruction_IFID;
+wire	[31:0] IR_IFID;
+wire	[7:0] PC_IFID;
 
 
 
@@ -66,8 +67,17 @@ PC_reg	pc_reg(
 	.reset(reset),
 	.data_in1(next_instruction),
 	.data_out(intruct_address));
+	
+IFID IF_ID(
+	.clock(clk),
+	.reset(reset),
+	.iIR(instruction),
+	.iPC(intruct_address),
+	.oIR(instruction_IFID),
+	.oPC(PC_IFID));
 
 
+	
 register_file	rf(
 	.reg_write(reg_write),
 	.clk(clk),
@@ -81,12 +91,12 @@ register_file	rf(
 
 
 sign_extension	signEx(
-	.IR(instruction),
+	.IR(instruction_IFID),
 	.sign_out(sign_extended));
 
 
 write_reg_MUX	write_reg_M(
-	.data(instruction),
+	.data(instruction_IFID),
 	.select1(reg_dest),
 	.outputdata(write_address));
 
@@ -106,10 +116,10 @@ jumpMux	Jmux(
 	.reg_value(read_data_1),
 	.newPc(next_instruction));
 
-
+// this will change as we shift the branch calculation stage beware of the instruction inputs
 jumpShift	Jshift(
 	.pcin(address_p_4),
-	.target1(instruction),
+	.target1(instruction_IFID),
 	.newAddr(new_address));
 
 
@@ -133,15 +143,15 @@ alu	ALU(
 	
 	.result(alu_res));
 
-
+//inputs will change
 aluCON	alu_con(
 	.aluop(aluop),
-	.IR(instruction),
+	.IR(),
 	.out_to_alu(alu_control));
 
 
 control_unit	con_unit(
-	.IR(instruction),
+	.IR(instruction_IFID),
 	.branch(branch),
 	.mem_read(mem_read),
 	.mem_to_reg(mem_to_reg),
@@ -165,7 +175,7 @@ data_memory	Dmemory(
 
 
 extract_reg_adrr	extract_adrr(
-	.IR(instruction),
+	.IR(instruction_IFID),
 	.addr1(read_address_1),
 	.addr2(read_address_2));
 
