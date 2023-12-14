@@ -59,7 +59,7 @@ wire	[31:0] Dmemory_to_mux;
 wire	[31:0] instruction_IFID;
 wire	[31:0] IR_IFID;
 wire	[7:0] PC_IFID;
-
+wire	alusrc_IDEX;
 
 
 PC_reg	pc_reg(
@@ -154,9 +154,8 @@ IDEX ID_EX(
 	.isign_ext(sign_extended),
 	//outputs
 	//execute
-				.oalusrc(),
-				.obranch(), //might not be needed
-				.ojump(), //might not be needed
+	.oalusrc(alusrc_IDEX),
+	 
 				//write back and memory
 				.omem_read(),
 				.omem_to_reg(),
@@ -207,7 +206,7 @@ extract_reg_adrr	extract_adrr(
 	.addr1(read_address_1),
 	.addr2(read_address_2));
 
-
+// this mux will be changed and the select innput is alusrc_IDEX
 mux2to1	alu_src_mux(
 	.select1(alusrc),
 	.data1(read_data_2),
