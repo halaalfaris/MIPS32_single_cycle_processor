@@ -1,6 +1,6 @@
 module Comparator_32bit (
-  input wire [31:0] A,
-  input wire [31:0] B,
+  input wire [31:0] In1,
+  input wire [31:0] In2,
   input wire [31:0] IR,
   input wire clk,
   input wire rst,
