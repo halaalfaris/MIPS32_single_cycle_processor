@@ -72,7 +72,18 @@ wire read_data2_IDEX;
 wire sign_ext_IDEX;
 wire write_addr_IDEX;
 wire aluop_IDEX;
+wire mem_read_EXMEM;
 
+wire mem_to_reg_EXMEM;
+wire pc_to_reg_EXMEM;
+wire mem_write_EXMEM;
+wire reg_write_EXMEM;
+wire PC_EXMEM;
+wire IR_EXMEM;	    
+wire alu_res_EXMEM; 
+wire Data_forMem_EXMEM;
+wire write_addr_EXMEM;
+	
 PC_reg	pc_reg(
 	.clock(clk),
 	.reset(reset),
@@ -95,7 +106,9 @@ register_file	rf(
 	.reset(reset),
 	.read_addr_1(read_address_1),
 	.read_addr_2(read_address_2),
-	.write_addr(write_address),
+	//
+	.write_addr(write_address_MEMWB),
+	
 	.write_data(write_data),
 	.read_data_1(read_data_1),
 	.read_data_2(read_data_2));
@@ -134,7 +147,7 @@ jumpShift	Jshift(
 	.newAddr(new_address));
 
 
-mux2to1	write_back_M(
+mux2to1	ultimate_write_back_M(
 	.select1(pc_to_reg),
 	.data1(write_back),
 	.data2(address_p_4),
@@ -149,14 +162,14 @@ IDEX ID_EX(
 	//inputs
 	.clock(clk), 
 	.reset(reset),
-	.ibranch(branch),
-	.ijump(jump),
 	.imem_read(mem_read),
 	.imem_to_reg(mem_to_reg),
 	.ipc_to_reg(pc_to_reg,
 	.imem_write(mem_write),
 	.ialusrc(alusrc),
 	.ireg_write(reg_write),
+	//check the original module
+	.iwrite_addr(write_addr),
 	//inputs part2
 	.iPC(PC_IFID),
 	.iIR(instruction_IFID),
@@ -196,6 +209,43 @@ aluCON	alu_con(
 	.out_to_alu(alu_control));
 
 
+	
+EXMEM EXMEM_buffer(
+	//inputs
+	.clock(clk), 
+	.reset(reset),
+
+	.imem_read(mem_read_IDEX),
+	.imem_to_reg(mem_to_reg_IDEX),
+	.ipc_to_reg(pc_to_reg),
+	.imem_write(mem_write_IDEX),
+	.ialu_res(alu_res),
+	//come back here after muxes
+	.iRS2(),
+	.ireg_write(reg_write_IDEX),
+	//inputs part2
+	.iPC(PC_IDEX),
+	.iIR(instruction_IDEX),
+	.iwrite_addr(write_addr_IDEX)
+	//outputs
+	// memory
+	.omem_read(mem_read_EXMEM),
+	.opc_to_reg(pc_to_reg_EXMEM),
+	.omem_write(mem_write_EXMEM),
+	
+	.oPC(PC_EXMEM),
+	.oIR(IR_EXMEM),	
+	
+	 
+	.oRS2(RS2_EXMEM),
+	//goes to write back mux
+	.oalu_res(alu_res_EXMEM),	
+	//write back
+	.omem_to_reg(mem_to_reg_EXMEM),
+	.owrite_addr(write_addr_EXMEM),
+	.oreg_write(reg_write_EXMEM));
+
+
 control_unit	con_unit(
 	.IR(instruction_IFID),
 	.branch(branch),
@@ -213,10 +263,12 @@ control_unit	con_unit(
 data_memory	Dmemory(
 	.clk(clk),
 	.reset(reset),
-	.mem_read(mem_read),
-	.mem_write(mem_write),
-	.addr(alu_res),
-	.write_data(read_data_2),
+	.mem_read(mem_read_EXMEM),
+	.mem_write(mem_write_EXMEM),
+	.addr(alu_res_EXMEM),
+	//change
+	.write_data(RS2_EXMEM),
+	//CHANGE NAME AFTER MAKING MEM/WB MODULE
 	.read_data(Dmemory_to_mux));
 
 
@@ -234,8 +286,8 @@ mux2to1	alu_src_mux(
 	.outputdata(alu_in_2));
 
 
-mux2to1	Dmemory_mux(
-	.select1(mem_to_reg),
+mux2to1	writeBack_mux(
+	.select1(mem_to_reg_MEMWB),
 	.data1(alu_res),
 	.data2(Dmemory_to_mux),
 	.outputdata(write_back));
