@@ -60,7 +60,18 @@ wire	[31:0] instruction_IFID;
 wire	[31:0] IR_IFID;
 wire	[7:0] PC_IFID;
 wire	alusrc_IDEX;
-
+wire mem_read_IDEX;
+wire mem_to_reg_IDEX;
+wire pc_to_reg_IDEX;
+wire mem_write_IDEX;
+wire reg_write_IDEX;
+wire PC_IDEX;
+wire IR_IDEX;
+wire read_data1_IDEX;
+wire read_data2_IDEX;
+wire sign_ext_IDEX;
+wire write_addr_IDEX;
+wire aluop_IDEX;
 
 PC_reg	pc_reg(
 	.clock(clk),
@@ -154,14 +165,22 @@ IDEX ID_EX(
 	.isign_ext(sign_extended),
 	//outputs
 	//execute
-	.oalusrc(alusrc_IDEX),
-	 
-				//write back and memory
-				.omem_read(),
-				.omem_to_reg(),
-				.opc_to_reg(),
-				.omem_write(),
-				.oreg_write(),
+		    .oalusrc(alusrc_IDEX), //will go to forwarding unit
+	 	    .osign_ext(sign_ext_IDEX),
+		    //write back and memory
+		    .omem_read(mem_read_IDEX),
+		    .omem_to_reg(mem_to_reg_IDEX),
+		    .opc_to_reg(pc_to_reg_IDEX),
+		    .omem_write(mem_write_IDEX),
+		    .oreg_write(reg_write_IDEX),
+		    .oPC(PC_IDEX),
+		    .oIR(IR_IDEX),
+		    .oread_data1(read_data1_IDEX),
+		    .oread_data2(read_data2_IDEX),
+		    
+		    .owrite_addr(write_addr_IDEX),
+		    .oaluop(aluop_IDEX));
+
 		    
 alu	ALU(
 	.aluCON(alu_control),
