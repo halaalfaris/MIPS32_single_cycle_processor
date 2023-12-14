@@ -165,25 +165,25 @@ IDEX ID_EX(
 	.isign_ext(sign_extended),
 	//outputs
 	//execute
-		    .oalusrc(alusrc_IDEX), //will go to forwarding unit
-	 	    .osign_ext(sign_ext_IDEX),
-		    //write back and memory
-		    .omem_read(mem_read_IDEX),
-		    .omem_to_reg(mem_to_reg_IDEX),
-		    .opc_to_reg(pc_to_reg_IDEX),
-		    .omem_write(mem_write_IDEX),
-		    .oreg_write(reg_write_IDEX),
-		    .oPC(PC_IDEX),
-		    .oIR(IR_IDEX),
-		    .oread_data1(read_data1_IDEX),
-		    .oread_data2(read_data2_IDEX),
-		    
-		    .owrite_addr(write_addr_IDEX),
-		    .oaluop(aluop_IDEX));
+	.oalusrc(alusrc_IDEX), 
+	.osign_ext(sign_ext_IDEX),
+	.oread_data1(read_data1_IDEX),
+	.oread_data2(read_data2_IDEX),
+	.oaluop(aluop_IDEX),
+	//write back and memory
+	.omem_read(mem_read_IDEX),
+	.omem_to_reg(mem_to_reg_IDEX),
+	.opc_to_reg(pc_to_reg_IDEX),
+	.omem_write(mem_write_IDEX),
+	.oreg_write(reg_write_IDEX),
+	.oPC(PC_IDEX),
+	.oIR(IR_IDEX),	    
+	.owrite_addr(write_addr_IDEX));
 
 		    
 alu	ALU(
 	.aluCON(alu_control),
+	//input will be from mux forwarding
 	.In1(read_data_1),
 	.In2(alu_in_2),
 	.branchYes(branch_yes),
@@ -225,11 +225,12 @@ extract_reg_adrr	extract_adrr(
 	.addr1(read_address_1),
 	.addr2(read_address_2));
 
-// this mux will be changed and the select innput is alusrc_IDEX
+
 mux2to1	alu_src_mux(
-	.select1(alusrc),
-	.data1(read_data_2),
-	.data2(sign_extended),
+	.select1(alusrc_IDEX),
+	.data1(read_data_2_IDEX),
+	.data2(sign_ext_IDEX),
+	//will cahnge the naming after adding the forwarding mux
 	.outputdata(alu_in_2));
 
 
