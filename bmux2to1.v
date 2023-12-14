@@ -6,7 +6,7 @@ module bmux2to1 (
     output wire [31:0] addressBranch // 32-bit output
 );
 wire select1; // select signal
-wire [31:0] targetShifted; // 2 x address + (PC +1)
+wire [31:0] targetShifted; // address + (PC +1)
 assign select1 = (branch && branchYes);
 assign targetShifted = target + add_out;
 assign addressBranch = (select1) ? targetShifted : add_out;
