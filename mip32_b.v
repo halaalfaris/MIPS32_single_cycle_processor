@@ -55,7 +55,7 @@ wire	[31:0] alu_res;
 wire	[31:0] read_data_2;
 wire	alusrc;
 wire	mem_to_reg;
-wire	[31:0] Dmemory_to_mux;
+wire	[31:0] Dmemory_res;
 	//SEGMENT IR YA FERAAAAAAAAAAAAAAAAS
 wire	[31:0] instruction_IFID;
 wire	[31:0] IR_IFID;
@@ -103,14 +103,14 @@ IFID IF_ID(
 
 	
 register_file	rf(
-	.reg_write(reg_write),
+	.reg_write(reg_write_MEMWB),
 	.clk(clk),
 	.reset(reset),
 	.read_addr_1(read_address_1),
 	.read_addr_2(read_address_2),
 	//
 	.write_addr(write_address_MEMWB),
-	
+	//FERAAAAAAAAAAAAAAAAAS PROOF READ THE WRITBACKKKKKKKKK
 	.write_data(write_data),
 	.read_data_1(read_data_1),
 	.read_data_2(read_data_2));
@@ -122,6 +122,7 @@ sign_extension	signEx(
 
 
 write_reg_MUX	write_reg_M(
+	//FERAAAS MAKE SURE I DID THIS CORRECTLY
 	.data(instruction_IFID),
 	.select1(reg_dest),
 	.outputdata(write_address));
@@ -150,9 +151,10 @@ jumpShift	Jshift(
 
 
 mux2to1	ultimate_write_back_M(
-	.select1(pc_to_reg),
+	.select1(pc_to_reg_MEMWB),
+	
 	.data1(write_back),
-	.data2(address_p_4),
+	.data2(PC_MEMWB),
 	.outputdata(write_data));
 
 
@@ -166,7 +168,7 @@ IDEX ID_EX(
 	.reset(reset),
 	.imem_read(mem_read),
 	.imem_to_reg(mem_to_reg),
-	.ipc_to_reg(pc_to_reg,
+	.ipc_to_reg(pc_to_reg),
 	.imem_write(mem_write),
 	.ialusrc(alusrc),
 	.ireg_write(reg_write),
@@ -219,7 +221,7 @@ EXMEM EXMEM_buffer(
 
 	.imem_read(mem_read_IDEX),
 	.imem_to_reg(mem_to_reg_IDEX),
-	.ipc_to_reg(pc_to_reg),
+	.ipc_to_reg(pc_to_reg_IDEX),
 	.imem_write(mem_write_IDEX),
 	.ialu_res(alu_res),
 	//come back here after muxes
@@ -232,19 +234,17 @@ EXMEM EXMEM_buffer(
 	//outputs
 	// memory
 	.omem_read(mem_read_EXMEM),
-	.opc_to_reg(pc_to_reg_EXMEM),
 	.omem_write(mem_write_EXMEM),
-	
 	.oPC(PC_EXMEM),
 	.oIR(IR_EXMEM),	
-	
-	 
 	.oRS2(RS2_EXMEM),
+	
 	//goes to write back mux
 	.oalu_res(alu_res_EXMEM),	
 	//write back
 	.omem_to_reg(mem_to_reg_EXMEM),
 	.owrite_addr(write_addr_EXMEM),
+	.opc_to_reg(pc_to_reg_EXMEM),
 	.oreg_write(reg_write_EXMEM));
 
 
@@ -268,10 +268,10 @@ data_memory	Dmemory(
 	.mem_read(mem_read_EXMEM),
 	.mem_write(mem_write_EXMEM),
 	.addr(alu_res_EXMEM),
-	//change
+
 	.write_data(RS2_EXMEM),
-	//CHANGE NAME AFTER MAKING MEM/WB MODULE
-	.read_data(Dmemory_to_mux));
+
+	.read_data(Dmemory_res));
 
 
 extract_reg_adrr	extract_adrr(
@@ -287,11 +287,45 @@ mux2to1	alu_src_mux(
 	//will cahnge the naming after adding the forwarding mux
 	.outputdata(alu_in_2));
 
+MEMWB MEMWB_buffer(
+	//inputs
+	.clock(clk), 
+	.reset(reset),
+
+
+	.imem_to_reg(mem_to_reg_EXMEM),
+	.ipc_to_reg(pc_to_reg_EXMEM),
+
+	.ialu_res(alu_res),
+
+
+	.ireg_write(reg_write_EXMEM),
+	//inputs part2
+	.iPC(PC_EXMEM),
+	.iIR(instruction_EXMEM),
+	.iwrite_addr(write_addr_EXMEM)
+	.iData_mem_res(Dmemory_res),
+	//outputs
+	// memory
+
+	.oPC(PC_MEMWB),
+	.oIR(IR_MEMWB),	
+
+	
+	//goes to write back mux
+		
+	//write back
+	.oData_mem_res(Dmem_res_MEMWB),
+	.oalu_res(alu_res_MEMWB),
+	.omem_to_reg(mem_to_reg_MEMWB),
+	.owrite_addr(write_addr_MEMWB),
+	.opc_to_reg(pc_to_reg_MEMWB),
+	.oreg_write(reg_write_MEMWB));
 
 mux2to1	writeBack_mux(
 	.select1(mem_to_reg_MEMWB),
-	.data1(alu_res),
-	.data2(Dmemory_to_mux),
+	.data1(alu_res_MEMWB),
+	.data2(Dmem_res_MEMWB),
 	.outputdata(write_back));
 
 
