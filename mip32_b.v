@@ -56,9 +56,11 @@ wire	[31:0] read_data_2;
 wire	alusrc;
 wire	mem_to_reg;
 wire	[31:0] Dmemory_to_mux;
+	//SEGMENT IR YA FERAAAAAAAAAAAAAAAAS
 wire	[31:0] instruction_IFID;
 wire	[31:0] IR_IFID;
-wire	[7:0] PC_IFID;
+wire	[7:0] PC_IFID
+	
 wire	alusrc_IDEX;
 wire mem_read_IDEX;
 wire mem_to_reg_IDEX;
@@ -72,8 +74,8 @@ wire read_data2_IDEX;
 wire sign_ext_IDEX;
 wire write_addr_IDEX;
 wire aluop_IDEX;
+	
 wire mem_read_EXMEM;
-
 wire mem_to_reg_EXMEM;
 wire pc_to_reg_EXMEM;
 wire mem_write_EXMEM;
