@@ -100,7 +100,17 @@ IFID IF_ID(
 	.oIR(instruction_IFID),
 	.oPC(PC_IFID));
 
-
+	hazard_detection hdu(
+		.forward(forward),
+		.alusrc(alusrc),
+		.SW_or_Branch(sworbranch),
+		.dest_EXE(write_addr_IDEX),
+		.dest_MEM(write_addr_EXMEM),
+		.Mem_to_Reg_EXE(reg_write_IDEX),
+		.Mem_to_Reg_MEM(reg_write_EXMEM),
+		.IR(IR_IFID),
+		.hazard_detected(hazard));
+		
 	
 register_file	rf(
 	.reg_write(reg_write_MEMWB),
