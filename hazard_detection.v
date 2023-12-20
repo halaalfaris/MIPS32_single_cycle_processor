@@ -1,4 +1,6 @@
-//revise this me
+//revise this. me
+//ask ghaith abt where the outputs go and how many
+//what is the second signal in the OR that is coming from the control unit.
 module hazard_detection(forward, alusrc, SW_or_Branch, src1_ID, src2_ID, dest_EXE,  dest_MEM, Mem_to_Reg_EXE, Mem_to_Reg_MEM branch_comm, hazard_detected, IR);
   input [4:0] dest_EXE, dest_MEM; //Rd from the pipeline
   input [31:0] IR;
