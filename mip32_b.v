@@ -174,6 +174,7 @@ adder4	add4(
 
 IDEX ID_EX(
 	//inputs
+	.hazard_detected(hazard)
 	.clock(clk), 
 	.reset(reset),
 	.imem_read(mem_read),
