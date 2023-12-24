@@ -74,6 +74,8 @@ wire read_data2_IDEX;
 wire sign_ext_IDEX;
 wire write_addr_IDEX;
 wire aluop_IDEX;
+wire [4:0] RS1_IDEX;
+wire [4:0] RS2_IDEX;
 	
 wire mem_read_EXMEM;
 wire mem_to_reg_EXMEM;
@@ -183,6 +185,8 @@ IDEX ID_EX(
 	.imem_write(mem_write),
 	.ialusrc(alusrc),
 	.ireg_write(reg_write),
+	.iRS1(read_address_1),
+	.iRS2(read_address_2),
 	//check the original module
 	.iwrite_addr(write_addr),
 	//inputs part2
@@ -197,6 +201,8 @@ IDEX ID_EX(
 	.osign_ext(sign_ext_IDEX),
 	.oread_data1(read_data1_IDEX),
 	.oread_data2(read_data2_IDEX),
+	.oRS1(RS1_IDEX),
+	.oRS2(RS2_IDEX),
 	.oaluop(aluop_IDEX),
 	//write back and memory
 	.omem_read(mem_read_IDEX),
