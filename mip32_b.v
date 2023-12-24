@@ -60,6 +60,8 @@ wire	[31:0] Dmemory_res;
 wire	[31:0] instruction_IFID;
 wire	[31:0] IR_IFID;
 wire	[7:0] PC_IFID
+	/////////////////////FERAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAS///////////
+	//WE FORGOT TO SPECIFY THE WIDTH OF THOSE WIRES//////////////
 	
 wire	alusrc_IDEX;
 wire mem_read_IDEX;
@@ -87,6 +89,10 @@ wire IR_EXMEM;
 wire alu_res_EXMEM; 
 wire Data_forMem_EXMEM;
 wire write_addr_EXMEM;
+
+//forwarding wires
+wire [1:0] ForwardA;
+wire [1:0] ForwardA;
 	
 PC_reg	pc_reg(
 	.clock(clk),
@@ -229,7 +235,16 @@ aluCON	alu_con(
 	.IR(),
 	.out_to_alu(alu_control));
 
-
+forwarding_unit forward(
+	.RS1_IDEX(RS1_IDEX),
+	.RS2_IDEX(RS2_IDEX),
+	.RD_EXMEM(write_addr_EXMEM),
+	.RD_MEMWB(write_addr_MEMWB),
+	.writeBack_EXMEM(reg_write_EXMEM),
+	.writeBack_MEMWB(reg_write_MEMWB),
+	.ForwardA(ForwardA),
+	.ForwardB(ForwardB));
+		
 	
 EXMEM EXMEM_buffer(
 	//inputs
