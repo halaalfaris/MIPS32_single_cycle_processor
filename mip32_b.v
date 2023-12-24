@@ -244,7 +244,23 @@ forwarding_unit forward(
 	.writeBack_MEMWB(reg_write_MEMWB),
 	.ForwardA(ForwardA),
 	.ForwardB(ForwardB));
-		
+//FERAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAS DO THIS
+	mux_4to1 muxA(
+		.data_input_0(read_data1_IDEX),
+		//this should be from the write back mux but feras you made multiples so figure it out
+		.data_input_1(),
+		.data_input_2(),
+		.data_input_3(),
+		.select(),
+		.data_output());
+
+		mux_4to1 muxB(
+		.data_input_0(),
+		.data_input_1(),
+		.data_input_2(),
+		.data_input_3(),
+		.select(),
+		.data_output());
 	
 EXMEM EXMEM_buffer(
 	//inputs
