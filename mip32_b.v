@@ -63,19 +63,19 @@ wire	[7:0] PC_IFID
 	/////////////////////FERAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAS///////////
 	//WE FORGOT TO SPECIFY THE WIDTH OF THOSE WIRES//////////////
 	
-wire	alusrc_IDEX;
+wire alusrc_IDEX;
 wire mem_read_IDEX;
 wire mem_to_reg_IDEX;
 wire pc_to_reg_IDEX;
 wire mem_write_IDEX;
 wire reg_write_IDEX;
-wire PC_IDEX;
-wire IR_IDEX;
-wire read_data1_IDEX;
-wire read_data2_IDEX;
-wire sign_ext_IDEX;
-wire write_addr_IDEX;
-wire aluop_IDEX;
+wire [7:0]PC_IDEX;
+wire [31:0]IR_IDEX;
+wire [31:0]read_data1_IDEX;
+wire [31:0]read_data2_IDEX;
+wire [31:0]sign_ext_IDEX;
+wire [4:0]write_addr_IDEX;
+wire [3:0]aluop_IDEX;
 wire [4:0] RS1_IDEX;
 wire [4:0] RS2_IDEX;
 	
@@ -84,17 +84,22 @@ wire mem_to_reg_EXMEM;
 wire pc_to_reg_EXMEM;
 wire mem_write_EXMEM;
 wire reg_write_EXMEM;
-wire PC_EXMEM;
-wire IR_EXMEM;	    
-wire alu_res_EXMEM; 
-wire Data_forMem_EXMEM;
-wire write_addr_EXMEM;
+wire [7:0]PC_EXMEM;
+wire [31:0]IR_EXMEM;	    
+wire [31:0]alu_res_EXMEM; 
+wire [31:0]Data_forMem_EXMEM;
+wire [4:0]write_addr_EXMEM;
 
 //forwarding wires
 wire [1:0] ForwardA;
 wire [1:0] ForwardA;
-	wire [1:0] ForwardB;
-	wire [1:0] ForwardB;
+wire [1:0] ForwardB;
+wire [1:0] ForwardB;
+
+//alu input muxes
+wire [31:0]alu_input1;
+wire [31:0]alu_input2;
+
 	
 PC_reg	pc_reg(
 	.clock(clk),
