@@ -56,6 +56,8 @@ wire	[31:0] read_data_2;
 wire	alusrc;
 wire	mem_to_reg;
 wire	[31:0] Dmemory_res;
+
+	
 	//SEGMENT IR YA FERAAAAAAAAAAAAAAAAS
 wire	[31:0] instruction_IFID;
 wire	[31:0] IR_IFID;
