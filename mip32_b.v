@@ -93,6 +93,8 @@ wire write_addr_EXMEM;
 //forwarding wires
 wire [1:0] ForwardA;
 wire [1:0] ForwardA;
+	wire [1:0] ForwardB;
+	wire [1:0] ForwardB;
 	
 PC_reg	pc_reg(
 	.clock(clk),
@@ -170,7 +172,6 @@ jumpShift	Jshift(
 
 mux2to1	ultimate_write_back_M(
 	.select1(pc_to_reg_MEMWB),
-	
 	.data1(write_back),
 	.data2(PC_MEMWB),
 	.outputdata(write_data));
@@ -224,15 +225,15 @@ IDEX ID_EX(
 alu	ALU(
 	.aluCON(alu_control),
 	//input will be from mux forwarding
-	.In1(read_data_1),
-	.In2(alu_in_2),
+	.In1(alu_input1),
+	.In2(alu_input2),
 	.branchYes(branch_yes),
 	.result(alu_res));
 
 //inputs will change
 aluCON	alu_con(
 	.aluop(aluop),
-	.IR(),
+	.IR(IR_IDEX),
 	.out_to_alu(alu_control));
 
 forwarding_unit forward(
@@ -247,20 +248,19 @@ forwarding_unit forward(
 //FERAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAS DO THIS
 	mux_4to1 muxA(
 		.data_input_0(read_data1_IDEX),
-		//this should be from the write back mux but feras you made multiples so figure it out
-		.data_input_1(),
-		.data_input_2(),
-		.data_input_3(),
-		.select(),
-		.data_output());
+		.data_input_1(write_data),
+		.data_input_2(alu_res_EXMEM),
+		.data_input_3(zz),
+		.select(ForwardA),
+		.data_output(alu_input1));
 
 		mux_4to1 muxB(
-		.data_input_0(),
-		.data_input_1(),
-		.data_input_2(),
-		.data_input_3(),
-		.select(),
-		.data_output());
+		.data_input_0(alu_in_2),
+		.data_input_1(write_data),
+		.data_input_2(alu_res_EXMEM),
+		.data_input_3(zz),
+		.select(ForwardB),
+		.data_output(alu_input2));
 	
 EXMEM EXMEM_buffer(
 	//inputs
