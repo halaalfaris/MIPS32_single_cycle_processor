@@ -1,26 +1,5 @@
 // Copyright (C) 2023  Intel Corporation. All rights reserved.
-`include "adder4.v"
-`include "alu.v"
-`include "aluCON.v"
-`include "bmux2to1.v"
-`include "control_unit.v"
-`include "data_memory.v"
-`include "extract_reg_addr.v"
-`include "IR.v"
-`include "jumpMUX.v"
-`include "jumpshift.v"
-`include "mux2to1.v"
-`include "PC_reg.v"
-`include "register_file.v"
-`include "sing_extend.v"
-`include "write_reg_MUX.v"
-`include "IFID.v"
-`include "hazard_detection.v"
-`include "IDEX.v"
-`include "forwarding_unit.v"
-`include "mux_4to1.v"
-`include "EXMEM.v"
-`include "MEMWB.v"
+
 
 module mip32_b(
 	clk,
@@ -68,15 +47,13 @@ wire	[31:0] instruction_IFID;
 wire	[31:0] IR_IFID;
 wire	[31:0] PC_IFID;
 
-	/////////////////////FERAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAS///////////
-	//WE FORGOT TO SPECIFY THE WIDTH OF THOSE WIRES//////////////
-	
 wire alusrc_IDEX;
 wire mem_read_IDEX;
 wire mem_to_reg_IDEX;
 wire pc_to_reg_IDEX;
 wire mem_write_IDEX;
 wire reg_write_IDEX;
+
 wire [31:0]PC_IDEX;
 wire [31:0]IR_IDEX;
 wire [31:0]read_data1_IDEX;
@@ -130,29 +107,30 @@ IFID IF_ID(
 	.iPC(intruct_address),
 	.oIR(instruction_IFID),
 	.oPC(PC_IFID));
-//FERAAAAAAAAAAAAAAAAS
-	/*hazard_detection hdu(
+
+hazard_detection hdu(
 		.forward(forward),
 		.alusrc(alusrc),
 		.SW_or_Branch(sworbranch),
 		.dest_EXE(write_addr_IDEX),
 		.dest_MEM(write_addr_EXMEM),
 		.Mem_to_Reg_EXE(reg_write_IDEX),
-		.Mem_to_Reg(),
 		.Mem_to_Reg_MEM(reg_write_EXMEM),
 		.IR(IR_IFID),
-		.hazard_detected(hazard));*/
+		.hazard_detected(hazard));
 		
 	
 register_file	rf(
+
+
 	.reg_write(reg_write_MEMWB),
 	.clk(clk),
 	.reset(reset),
 	.read_addr_1(read_address_1),
 	.read_addr_2(read_address_2),
-	//
+	
 	.write_addr(write_addr_MEMWB),
-	//FERAAAAAAAAAAAAAAAAAS PROOF READ THE WRITBACKKKKKKKKK
+	
 	.write_data(write_data),
 	.read_data_1(read_data_1),
 	.read_data_2(read_data_2));
@@ -260,18 +238,19 @@ aluCON	alu_con(
 	.IR(IR_IDEX),
 	.out_to_alu(alu_control));
 
-forwarding_unit forward(
+forwarding_unit forward2(
 	.clk(clk),
 	.rst(reset),
 	.RS1_IDEX(RS1_IDEX),
 	.RS2_IDEX(RS2_IDEX),
 	.RD_EXMEM(write_addr_EXMEM),
-	
 	.RD_MEMWB(write_addr_MEMWB),
 	.writeBack_EXMEM(reg_write_EXMEM),
 	.writeBack_MEMWB(reg_write_MEMWB),
 	.ForwardA(ForwardA),
 	.ForwardB(ForwardB));
+	
+	
 //FERAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAS DO THIS
 	mux_4to1 muxA(
 		.data_input_0(read_data1_IDEX),
@@ -359,7 +338,7 @@ mux2to1	alu_src_mux(
 	.select1(alusrc_IDEX),
 	.data1(read_data2_IDEX),
 	.data2(sign_ext_IDEX),
-	
+	//will cahnge the naming after adding the forwarding mux
 	.outputdata(alu_in_2));
 
 MEMWB MEMWB_buffer(
@@ -371,7 +350,7 @@ MEMWB MEMWB_buffer(
 	.imem_to_reg(mem_to_reg_EXMEM),
 	.ipc_to_reg(pc_to_reg_EXMEM),
 
-	.ialu_res(alu_res),
+	.ialu_res(alu_res_EXMEM),
 
 	.ireg_write(reg_write_EXMEM),
 	//inputs part2
