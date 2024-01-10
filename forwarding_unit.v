@@ -3,17 +3,21 @@ module forwarding_unit(
   input [4:0] RS2_IDEX,
   input [4:0] RD_EXMEM,
   input [4:0] RD_MEMWB,
+  input clk,
+  input rst,
   input writeBack_EXMEM,
   input writeBack_MEMWB,
-  output [1:0] ForwardA,
-  output [1:0] ForwardB)
+  output reg [1:0] ForwardA,
+  output reg [1:0] ForwardB
+  
+  );
 
-  always @(posedge clk or posedge rst) begin
+  always @(posedge clk or posedge rst)
+	begin
     if (rst) begin
       ForwardA <= 2'b00;
       ForwardB <= 2'b00;
-      MuxCtrlSourceA <= 2'b00;
-      MuxCtrlSourceB <= 2'b00;
+
     end 
     else begin
       // ForwardA logic
@@ -33,6 +37,6 @@ module forwarding_unit(
         ForwardB <= 2'b01;
       else
         ForwardB <= 2'b00;
-
+		end
     end
-    endmodule
+endmodule

@@ -1,11 +1,11 @@
 `timescale 1 ns/1 ns
-`include "mip32.v"
+`include "mip32_b.v"
 
 module mips32_tb ();
 
 reg clk, reset;
 
-mip32 mip (clk, reset);
+mip32_b mip (clk, reset);
 
 
 

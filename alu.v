@@ -63,7 +63,13 @@ always @(*)
 assign temp = In1[30:0] + In2[30:0];
 assign result = {res[31:0]};
 assign carry = res[32];
-
+/*
+assign ov = carry ^ temp[31];
+*/
 assign zero = (res==32'd0) ? 1'b1: 1'b0;  
+
+
+
+
 
 endmodule

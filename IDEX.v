@@ -1,14 +1,23 @@
-module IDEX(clock, reset, iPC, iIR, iwrite_addr, ibranch, ijump, imem_read, imem_to_reg, ipc_to_reg, ialuop, imem_write, ialusrc, ireg_write, iread_data1, iread_data2, isign_ext,
-oPC, oIR, owrite_addr, omem_read, opc_to_reg, oaluop, omem_write, oalusrc, oreg_write, oread_data1, oread_data2, osign_ext, hazard_detected);
-input clock, reset, ibranch, ijump, imem_read, imem_to_reg, ipc_to_reg, imem_write, ialusrc, ireg_write,iRS1,iRS2,oRS1,oRS2;
+module IDEX(clock, reset, iPC, iIR, iwrite_addr, ibranch, ijump, imem_read, imem_to_reg, ipc_to_reg, ialuop, imem_write, ialusrc, ireg_write, iread_data1, iread_data2, isign_ext,iRS1,iRS2,
+omem_to_reg,oPC, oIR, owrite_addr, omem_read, opc_to_reg, oaluop, omem_write, oalusrc, oreg_write, oread_data1, oread_data2, osign_ext, hazard_detected,oRS1,oRS2);
+
+
+
+input clock, reset, ibranch, ijump, imem_read, imem_to_reg, ipc_to_reg, imem_write, ialusrc, ireg_write, hazard_detected;
 input [31:0] iPC, iIR, iread_data1, iread_data2, isign_ext;
-input[4:0] iwrite_addr;
-input [3:0] ialuop,iRS1,iRS2;
+input[4:0] iwrite_addr,iRS1,iRS2;
+input [3:0] ialuop;
+
+
+
 output reg  omem_read, omem_to_reg, opc_to_reg, omem_write, oalusrc, oreg_write;
 output reg [31:0] oPC, oIR, oread_data1, oread_data2, osign_ext;
 output reg [4:0] owrite_addr,oRS1,oRS2;
 output reg [3:0] oaluop;
+
 wire flush;
+
+
 assign flush = reset || hazard_detected;
 initial begin
 	oPC=32'b0;
@@ -51,5 +60,6 @@ begin
 		owrite_addr <= 0;
 		oaluop <=0;
 		osign_ext <= 0;
+	end
 end
 endmodule

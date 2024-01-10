@@ -1,5 +1,4 @@
 // Copyright (C) 2023  Intel Corporation. All rights reserved.
-
 `include "adder4.v"
 `include "alu.v"
 `include "aluCON.v"
@@ -15,10 +14,15 @@
 `include "register_file.v"
 `include "sing_extend.v"
 `include "write_reg_MUX.v"
+`include "IFID.v"
+`include "hazard_detection.v"
+`include "IDEX.v"
+`include "forwarding_unit.v"
+`include "mux_4to1.v"
+`include "EXMEM.v"
+`include "MEMWB.v"
 
-
-
-module mip32(
+module mip32_b(
 	clk,
 	reset
 );
@@ -59,9 +63,11 @@ wire	[31:0] Dmemory_res;
 
 	
 	//SEGMENT IR YA FERAAAAAAAAAAAAAAAAS
+	
 wire	[31:0] instruction_IFID;
 wire	[31:0] IR_IFID;
-wire	[7:0] PC_IFID
+wire	[31:0] PC_IFID;
+
 	/////////////////////FERAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAS///////////
 	//WE FORGOT TO SPECIFY THE WIDTH OF THOSE WIRES//////////////
 	
@@ -71,7 +77,8 @@ wire mem_to_reg_IDEX;
 wire pc_to_reg_IDEX;
 wire mem_write_IDEX;
 wire reg_write_IDEX;
-wire [7:0]PC_IDEX;
+wire [31:0]read_data_2_IDEX;
+wire [31:0]PC_IDEX;
 wire [31:0]IR_IDEX;
 wire [31:0]read_data1_IDEX;
 wire [31:0]read_data2_IDEX;
@@ -86,16 +93,24 @@ wire mem_to_reg_EXMEM;
 wire pc_to_reg_EXMEM;
 wire mem_write_EXMEM;
 wire reg_write_EXMEM;
-wire [7:0]PC_EXMEM;
+wire [31:0]PC_EXMEM;
 wire [31:0]IR_EXMEM;	    
 wire [31:0]alu_res_EXMEM; 
 wire [31:0]Data_forMem_EXMEM;
 wire [4:0]write_addr_EXMEM;
+wire [31:0]RS2_EXMEM;
+wire [31:0]RS1_EXMEM;
+wire [31:0] instruction_EXMEM;
 
+wire [31:0] alu_res_MEMWB;
+wire [31:0] Dmem_res_MEMWB;
+wire [4:0]write_addr_MEMWB;
+wire [31:0] IR_MEMWB;
+wire [31:0] PC_MEMWB;
+wire [4:0] write_address_MEMWB;
 //forwarding wires
 wire [1:0] ForwardA;
-wire [1:0] ForwardA;
-wire [1:0] ForwardB;
+
 wire [1:0] ForwardB;
 
 //alu input muxes
@@ -190,7 +205,7 @@ adder4	add4(
 
 IDEX ID_EX(
 	//inputs
-	.hazard_detected(hazard)
+	.hazard_detected(hazard),
 	.clock(clk), 
 	.reset(reset),
 	.imem_read(mem_read),
@@ -201,8 +216,10 @@ IDEX ID_EX(
 	.ireg_write(reg_write),
 	.iRS1(read_address_1),
 	.iRS2(read_address_2),
+	.ialuop(aluop),
 	//check the original module
-	.iwrite_addr(write_addr),
+		//we are not sure about this FERAAAAAAAAAAAAAAAAAS
+	.iwrite_addr(write_address),
 	//inputs part2
 	.iPC(PC_IFID),
 	.iIR(instruction_IFID),
@@ -257,7 +274,7 @@ forwarding_unit forward(
 		.data_input_0(read_data1_IDEX),
 		.data_input_1(write_data),
 		.data_input_2(alu_res_EXMEM),
-		.data_input_3(zz),
+		.data_input_3(),
 		.select(ForwardA),
 		.data_output(alu_input1));
 
@@ -265,7 +282,7 @@ forwarding_unit forward(
 		.data_input_0(alu_in_2),
 		.data_input_1(write_data),
 		.data_input_2(alu_res_EXMEM),
-		.data_input_3(zz),
+		.data_input_3(),
 		.select(ForwardB),
 		.data_output(alu_input2));
 	
@@ -284,8 +301,8 @@ EXMEM EXMEM_buffer(
 	.ireg_write(reg_write_IDEX),
 	//inputs part2
 	.iPC(PC_IDEX),
-	.iIR(instruction_IDEX),
-	.iwrite_addr(write_addr_IDEX)
+	.iIR(IR_IDEX),
+	.iwrite_addr(write_addr_IDEX),
 	//outputs
 	// memory
 	.omem_read(mem_read_EXMEM),
@@ -353,12 +370,11 @@ MEMWB MEMWB_buffer(
 
 	.ialu_res(alu_res),
 
-
 	.ireg_write(reg_write_EXMEM),
 	//inputs part2
 	.iPC(PC_EXMEM),
 	.iIR(instruction_EXMEM),
-	.iwrite_addr(write_addr_EXMEM)
+	.iwrite_addr(write_addr_EXMEM),
 	.iData_mem_res(Dmemory_res),
 	//outputs
 	// memory
@@ -388,6 +404,4 @@ IR	instruction_memory(
 	.address(intruct_address),
 	.data(instruction));
 
-
 endmodule
-
