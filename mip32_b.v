@@ -77,7 +77,6 @@ wire mem_to_reg_IDEX;
 wire pc_to_reg_IDEX;
 wire mem_write_IDEX;
 wire reg_write_IDEX;
-wire [31:0]read_data_2_IDEX;
 wire [31:0]PC_IDEX;
 wire [31:0]IR_IDEX;
 wire [31:0]read_data1_IDEX;
@@ -107,7 +106,7 @@ wire [31:0] Dmem_res_MEMWB;
 wire [4:0]write_addr_MEMWB;
 wire [31:0] IR_MEMWB;
 wire [31:0] PC_MEMWB;
-wire [4:0] write_address_MEMWB;
+
 //forwarding wires
 wire [1:0] ForwardA;
 
@@ -131,17 +130,18 @@ IFID IF_ID(
 	.iPC(intruct_address),
 	.oIR(instruction_IFID),
 	.oPC(PC_IFID));
-
-	hazard_detection hdu(
+//FERAAAAAAAAAAAAAAAAS
+	/*hazard_detection hdu(
 		.forward(forward),
 		.alusrc(alusrc),
 		.SW_or_Branch(sworbranch),
 		.dest_EXE(write_addr_IDEX),
 		.dest_MEM(write_addr_EXMEM),
 		.Mem_to_Reg_EXE(reg_write_IDEX),
+		.Mem_to_Reg(),
 		.Mem_to_Reg_MEM(reg_write_EXMEM),
 		.IR(IR_IFID),
-		.hazard_detected(hazard));
+		.hazard_detected(hazard));*/
 		
 	
 register_file	rf(
@@ -151,7 +151,7 @@ register_file	rf(
 	.read_addr_1(read_address_1),
 	.read_addr_2(read_address_2),
 	//
-	.write_addr(write_address_MEMWB),
+	.write_addr(write_addr_MEMWB),
 	//FERAAAAAAAAAAAAAAAAAS PROOF READ THE WRITBACKKKKKKKKK
 	.write_data(write_data),
 	.read_data_1(read_data_1),
@@ -261,9 +261,12 @@ aluCON	alu_con(
 	.out_to_alu(alu_control));
 
 forwarding_unit forward(
+	.clk(clk),
+	.rst(reset),
 	.RS1_IDEX(RS1_IDEX),
 	.RS2_IDEX(RS2_IDEX),
 	.RD_EXMEM(write_addr_EXMEM),
+	
 	.RD_MEMWB(write_addr_MEMWB),
 	.writeBack_EXMEM(reg_write_EXMEM),
 	.writeBack_MEMWB(reg_write_MEMWB),
@@ -297,7 +300,7 @@ EXMEM EXMEM_buffer(
 	.imem_write(mem_write_IDEX),
 	.ialu_res(alu_res),
 	//come back here after muxes
-	.iRS2(),
+	.iRS2(alu_input2),
 	.ireg_write(reg_write_IDEX),
 	//inputs part2
 	.iPC(PC_IDEX),
@@ -354,9 +357,9 @@ extract_reg_adrr	extract_adrr(
 
 mux2to1	alu_src_mux(
 	.select1(alusrc_IDEX),
-	.data1(read_data_2_IDEX),
+	.data1(read_data2_IDEX),
 	.data2(sign_ext_IDEX),
-	//will cahnge the naming after adding the forwarding mux
+	
 	.outputdata(alu_in_2));
 
 MEMWB MEMWB_buffer(
