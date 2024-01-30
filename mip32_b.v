@@ -1,389 +1,146 @@
-// Copyright (C) 2023  Intel Corporation. All rights reserved.
+
+// Feras's version
+module mip32_b(input reset, input clk);
+//misc wires
+wire [31:0] sign_out_Decode, sign_out_Execution;
+wire [31:0] Branch_Address, Jump_Address;
+wire [3:0] out_to_alu;
+wire branchYes;
+wire [31:0] alu1, alu2, rs2, rs2_Memory, alu_res_Execution, alu_res_Memory, alu_res_WB, read_data_Memory, read_data_WB;
+//PC wires
+wire [31:0] PC_Add_One, PC_Add_One_Decode, PC_Add_One_Execution, PC_Add_One_Memory, PC_Add_One_WB;//PC + 1, carried through the whole pipeline for Jal to work
+wire [31:0] Final_PC; //pc value after all the jumping and branching
+wire [7:0] PC_Value; //pc value into the Instruction Memory(should be carried to the Execution stage for exceptions)
+
+//IR wires
+wire [31:0] opcode_Fetch, opcode_Decode, opcode_Execution, opcode_Memory, opcode_WB; //opcode leaving the IR and going through the pipeline
+
+//Control Unit wires
+	//(Decode stage)
+	wire [1:0] reg_dest_Decode; //to choose for the write_reg_mux what should be taken as rd(10 chooses the 31st register when using jal)
+	wire branch_Decode, pc_to_reg_Decode, mem_read_Decode, mem_to_reg_Decode, mem_write_Decode, alusrc_Decode, reg_write_Decode;
+	wire [1:0] jump_Decode;
+	wire [3:0] aluop_Decode; 
+	//(Execution stage)
+	wire pc_to_reg_Execution, mem_read_Execution, mem_to_reg_Execution, mem_write_Execution, alusrc_Execution, reg_write_Execution;
+	wire [1:0] jump_Execution;
+	wire [3:0] aluop_Execution; 
+	//(Memory Stage)
+	wire pc_to_reg_Memory, mem_read_Memory, mem_to_reg_Memory, mem_write_Memory, reg_write_Memory;
+	//WB stage
+	wire pc_to_reg_WB, mem_to_reg_WB, reg_write_WB;
+	
+//Register File wires
+wire [4:0] RS1_Decode, RS1_Execution, RS2_Decode, RS2_Execution; //operand addresses(used to compare with RD in the forwarding unit)
+wire [4:0] RD_Decode, RD_Execution, RD_Memory, RD_WB; //Register Destination address(carried through the whole pipeline)
+wire [31:0] RS1_Data_Decode, RS1_Data_Execution, RS2_Data_Decode, Rs2_Data_Execution, Rs2_Data_Memory;
+wire [31:0] RD_Value_Memory; //alu result
+wire [31:0] RD_Value_WB; //result of the mux in the WB stage, chooses between memory result or the alu result(not the mux that is immediately before the RF)
+wire [31:0] RD_Value;//rd value between mem/alu and pc
 
 
-module mip32_b(
-	clk,
-	reset
+
+
+//note for instantiations of modules; above are inputs, below are outputs(for the most part)
+PC_reg(clk, reset, Final_PC_Fetch, 
+PC_Value 
 );
 
+adder4 (PC_Value, PC_Add_One); // to get pc +1
 
-input wire	clk;
-input wire	reset;
+IR(
+    PC_Value, 
+     opcode_Fetch    
+);
 
-wire	[31:0] next_instruction;
-wire	reg_write;
-wire	[4:0] read_address_1;
-wire	[4:0] read_address_2;
-wire	[4:0] write_address;
-wire	[31:0] write_data;
-wire	[31:0] instruction;
-wire	[1:0] reg_dest;
-wire	branch_yes;
-wire	branch;
-wire	[31:0] address_p_4;
-wire	[31:0] sign_extended;
-wire	[31:0] address_branch;
-wire	[1:0] jump;
-wire	[31:0] new_address;
-wire	[31:0] read_data_1;
-wire	pc_to_reg;
-wire	[31:0] write_back;
-wire	[7:0] intruct_address;
-wire	[3:0] alu_control;
-wire	[31:0] alu_in_2;
-wire	[3:0] aluop;
-wire	mem_read;
-wire	mem_write;
-wire	[31:0] alu_res;
-wire	[31:0] read_data_2;
-wire	alusrc;
-wire	mem_to_reg;
-wire	[31:0] Dmemory_res;
+IFID(clk, reset, opcode_Fetch, PC_Add_One, 
+opcode_Decode, PC_Add_One_Decode);
 
-	
-	//SEGMENT IR YA FERAAAAAAAAAAAAAAAAS
-	
-wire	[31:0] instruction_IFID;
-wire	[31:0] IR_IFID;
-wire	[31:0] PC_IFID;
+control_unit (opcode_Decode, 
+reg_dest_Decode, branch_Decode, jump_Decode, mem_read_Decode, mem_to_reg_Decode ,pc_to_reg_Decode, aluop_Decode, mem_write_Decode, alusrc_Decode, reg_write_Decode);
 
-wire alusrc_IDEX;
-wire mem_read_IDEX;
-wire mem_to_reg_IDEX;
-wire pc_to_reg_IDEX;
-wire mem_write_IDEX;
-wire reg_write_IDEX;
+extract_reg_adrr(
+opcode_Decode,
+RS1_Decode, RS2_Decode
+); //to get rs1 and rs2 values from the IR (it would be preferable if this stuff is done in RF itself though)
 
-wire [31:0]PC_IDEX;
-wire [31:0]IR_IDEX;
-wire [31:0]read_data1_IDEX;
-wire [31:0]read_data2_IDEX;
-wire [31:0]sign_ext_IDEX;
-wire [4:0]write_addr_IDEX;
-wire [3:0]aluop_IDEX;
-wire [4:0] RS1_IDEX;
-wire [4:0] RS2_IDEX;
-	
-wire mem_read_EXMEM;
-wire mem_to_reg_EXMEM;
-wire pc_to_reg_EXMEM;
-wire mem_write_EXMEM;
-wire reg_write_EXMEM;
-wire [31:0]PC_EXMEM;
-wire [31:0]IR_EXMEM;	    
-wire [31:0]alu_res_EXMEM; 
-wire [31:0]Data_forMem_EXMEM;
-wire [4:0]write_addr_EXMEM;
-wire [31:0]RS2_EXMEM;
-wire [31:0]RS1_EXMEM;
-wire [31:0] instruction_EXMEM;
+write_reg_MUX (
+     reg_dest_Decode, opcode_Decode,
+     RD_Decode 
+); //outputs RD_Decode which ENTERS THE PIPELINE NOT THE RF
 
-wire [31:0] alu_res_MEMWB;
-wire [31:0] Dmem_res_MEMWB;
-wire [4:0]write_addr_MEMWB;
-wire [31:0] IR_MEMWB;
-wire [31:0] PC_MEMWB;
+register_file (RS1_Decode, RS2_Decode, RD_WB, 
+RS1_Data_Decode, RS2_Data_Decode, RD_Value, reg_write_WB, clk, reset); //note: clk and reset are not outputs, just didnt bother and change the order in the original file
 
-//forwarding wires
-wire [1:0] ForwardA;
+Comparator_32bit (
+  RS1_Data_Decode, RS2_Data_Decode, opcode_Decode, clk, rst,
+  branchYes, res
+); //a comparator used to find the result of the branching instead of the alu(jumping and branching results will also be done in decode)
 
-wire [1:0] ForwardB;
+sign_extension (opcode_Decode, 
+sign_out_Decode);
 
-//alu input muxes
-wire [31:0]alu_input1;
-wire [31:0]alu_input2;
+bmux2to1 (
+	 branchYes, branch_Decode, PC_Add_One_Decode, sign_out_Decode,
+    Branch_Address);
+	 
+jumpShift(opcode_Decode, PC_Add_One_Decode, 
+Jump_Address);//the module used to get the jump address
 
-	
-PC_reg	pc_reg(
-	.clock(clk),
-	.reset(reset),
-	.data_in1(next_instruction),
-	.data_out(intruct_address));
-	
-IFID IF_ID(
-	.clock(clk),
-	.reset(reset),
-	.iIR(instruction),
-	.iPC(intruct_address),
-	.oIR(instruction_IFID),
-	.oPC(PC_IFID));
-
-hazard_detection hdu(
-		.forward(forward),
-		.alusrc(alusrc),
-		.SW_or_Branch(sworbranch),
-		.dest_EXE(write_addr_IDEX),
-		.dest_MEM(write_addr_EXMEM),
-		.Mem_to_Reg_EXE(reg_write_IDEX),
-		.Mem_to_Reg_MEM(reg_write_EXMEM),
-		.IR(IR_IFID),
-		.hazard_detected(hazard));
-		
-	
-register_file	rf(
+jumpMux(Jump_Address, RS1_Data_Decode, Branch_Address, jump_Decode, 
+Final_PC);// chooses between either jump address, branch address, or an address stored in a register for the jr instruction
 
 
-	.reg_write(reg_write_MEMWB),
-	.clk(clk),
-	.reset(reset),
-	.read_addr_1(read_address_1),
-	.read_addr_2(read_address_2),
-	
-	.write_addr(write_addr_MEMWB),
-	
-	.write_data(write_data),
-	.read_data_1(read_data_1),
-	.read_data_2(read_data_2));
+IDEX(clk, reset, PC_Add_One_Decode, opcode_Decode, RD_Decode, ibranch, ijump, mem_read_Decode, mem_to_reg_Decode, pc_to_reg_Decode, aluop_Decode, mem_write_Decode, alusrc_Decode, reg_write_Decode,
+ RS1_Data_Decode, RS2_Data_Decode, sign_out_Decode,RS1_Decode,RS2_Decode,
+mem_to_reg_Execution,PC_Add_One_Execution, opcode_Execution, RD_Execution, 
+mem_read_Execution, pc_to_reg_Execution, aluop_Execution, mem_write_Execution, alusrc_Execution, reg_write_Execution,
+RS1_Data_Execution, RS2_Data_Execution, sign_out_Execution, hazard_detected,RS1_Execution, RS2_Execution);
+//got lazy but you should REMOVE the jump and branch signals for after the decode stage; so I didnt change the ijump ibranch stuff :)
+
+aluCON (aluop_Execution, opcode_Execution, out_to_alu);
+
+forwarding_unit(
+  RS1_Execution, RS2_Execution, RD_Memory, RD_WB, reg_write_Memory, reg_write_WB, clk, reset,
+  ForwardA, ForwardB);//forwarding unit compares the operands with the destination of the prior instructions to check dependencies
+  
+mux_4to1 (
+  RS1_Data_Execution, RD_Value_WB, RD_Value_Memory, data_input_3, ForwardA,
+  alu1);
+ mux_4to1 (
+  RS2_Data_Execution, RD_Value_WB, RD_Value_Memory, data_input_3, ForwardB,
+  rs2);
+  //these muxs choose where the forward data comes from
+  //no reason to keep "data_input_3"; kept it in case it was needed.
+ mux2to1 m1(
+    alusrc_Execution, rs2, sign_out_Execution,
+    alu2
+);//chooses between immediate value or rs2 value
+
+alu (
+out_to_alu, alu1, alu2, alu_res_Execution,
+branchYes, ov); //uhh the alu duh
+//also, the branchYes should be removed since branching happens in decode stage now. same with the comparisons in the alu as well
 
 
-sign_extension	signEx(
-	.IR(instruction_IFID),
-	.sign_out(sign_extended));
+EXMEM(clk, reset, PC_Add_One_Execution, opcode_Execution, RD_Execution, mem_read_Execution, mem_to_reg_Execution, pc_to_reg_Execution, mem_write_Execution, reg_write_Execution, rs2,
+PC_Add_One_Memory, opcode_Memory, RD_Memory, mem_read_Memory, pc_to_reg_Memory, mem_write_Memory, reg_write_Memory,alu_res_Execution, alu_res_Memory, mem_to_reg_Memory ,rs2_Memory);
 
 
-write_reg_MUX	write_reg_M(
-	//FERAAAS MAKE SURE I DID THIS CORRECTLY
-	.data(instruction_IFID),
-	.select1(reg_dest),
-	.outputdata(write_address));
+data_memory (alu_res_Memory, rs2_Memory, read_data_Memory, clk, reset, mem_read_Memory, mem_write_Memory);
 
+MEMWB(clk, reset, PC_Add_One_Memory, opcode_Memory, RD_Memory, mem_to_reg_Memory, pc_to_reg_Memory, reg_write_Memory, read_data_Memory, mem_to_reg_WB, read_data_WB,
+PC_Add_One_WB, opcode_WB, RD_WB, pc_to_reg_WB, reg_write_WB, alu_res_Memory, alu_res_WB);
 
-bmux2to1	Bmux(
-	.branchYes(branch_yes),
-	.branch(branch),
-	.add_out(address_p_4),
-	.target(sign_extended),
-	.addressBranch(address_branch));
+mux2to1 m2(
+    mem_to_reg_WB, alu_res_WB, read_data_WB,
+	 RD_Value_WB
+);//alu result and memory data
 
+mux2to1 m3(
+    pc_to_reg_WB, RD_Value_WB, PC_Add_One_WB,
+	 RD_Value
+);// alu/memory or pc
 
-jumpMux	Jmux(
-	.addressBranch(address_branch),
-	.jump(jump),
-	.newAddr(new_address),
-	.reg_value(read_data_1),
-	.newPc(next_instruction));
-
-// this will change as we shift the branch calculation stage beware of the instruction inputs
-jumpShift	Jshift(
-	.pcin(address_p_4),
-	.target1(instruction_IFID),
-	.newAddr(new_address));
-
-
-mux2to1	ultimate_write_back_M(
-	.select1(pc_to_reg_MEMWB),
-	.data1(write_back),
-	.data2(PC_MEMWB),
-	.outputdata(write_data));
-
-
-adder4	add4(
-	.A(intruct_address),
-	.add_out(address_p_4));
-
-IDEX ID_EX(
-	//inputs
-	.hazard_detected(hazard),
-	.clock(clk), 
-	.reset(reset),
-	.imem_read(mem_read),
-	.imem_to_reg(mem_to_reg),
-	.ipc_to_reg(pc_to_reg),
-	.imem_write(mem_write),
-	.ialusrc(alusrc),
-	.ireg_write(reg_write),
-	.iRS1(read_address_1),
-	.iRS2(read_address_2),
-	.ialuop(aluop),
-	//check the original module
-		//we are not sure about this FERAAAAAAAAAAAAAAAAAS
-	.iwrite_addr(write_address),
-	//inputs part2
-	.iPC(PC_IFID),
-	.iIR(instruction_IFID),
-	.iread_data1(read_data_1),
-	.iread_data2(read_data_2),
-	.isign_ext(sign_extended),
-	//outputs
-	//execute
-	.oalusrc(alusrc_IDEX), 
-	.osign_ext(sign_ext_IDEX),
-	.oread_data1(read_data1_IDEX),
-	.oread_data2(read_data2_IDEX),
-	.oRS1(RS1_IDEX),
-	.oRS2(RS2_IDEX),
-	.oaluop(aluop_IDEX),
-	//write back and memory
-	.omem_read(mem_read_IDEX),
-	.omem_to_reg(mem_to_reg_IDEX),
-	.opc_to_reg(pc_to_reg_IDEX),
-	.omem_write(mem_write_IDEX),
-	.oreg_write(reg_write_IDEX),
-	.oPC(PC_IDEX),
-	.oIR(IR_IDEX),	    
-	.owrite_addr(write_addr_IDEX));
-
-		    
-alu	ALU(
-	.aluCON(alu_control),
-	//input will be from mux forwarding
-	.In1(alu_input1),
-	.In2(alu_input2),
-	.branchYes(branch_yes),
-	.result(alu_res));
-
-//inputs will change
-aluCON	alu_con(
-	.aluop(aluop),
-	.IR(IR_IDEX),
-	.out_to_alu(alu_control));
-
-forwarding_unit forward2(
-	.clk(clk),
-	.rst(reset),
-	.RS1_IDEX(RS1_IDEX),
-	.RS2_IDEX(RS2_IDEX),
-	.RD_EXMEM(write_addr_EXMEM),
-	.RD_MEMWB(write_addr_MEMWB),
-	.writeBack_EXMEM(reg_write_EXMEM),
-	.writeBack_MEMWB(reg_write_MEMWB),
-	.ForwardA(ForwardA),
-	.ForwardB(ForwardB));
-	
-	
-//FERAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAS DO THIS
-	mux_4to1 muxA(
-		.data_input_0(read_data1_IDEX),
-		.data_input_1(write_data),
-		.data_input_2(alu_res_EXMEM),
-		.data_input_3(),
-		.select(ForwardA),
-		.data_output(alu_input1));
-
-		mux_4to1 muxB(
-		.data_input_0(alu_in_2),
-		.data_input_1(write_data),
-		.data_input_2(alu_res_EXMEM),
-		.data_input_3(),
-		.select(ForwardB),
-		.data_output(alu_input2));
-	
-EXMEM EXMEM_buffer(
-	//inputs
-	.clock(clk), 
-	.reset(reset),
-
-	.imem_read(mem_read_IDEX),
-	.imem_to_reg(mem_to_reg_IDEX),
-	.ipc_to_reg(pc_to_reg_IDEX),
-	.imem_write(mem_write_IDEX),
-	.ialu_res(alu_res),
-	//come back here after muxes
-	.iRS2(alu_input2),
-	.ireg_write(reg_write_IDEX),
-	//inputs part2
-	.iPC(PC_IDEX),
-	.iIR(IR_IDEX),
-	.iwrite_addr(write_addr_IDEX),
-	//outputs
-	// memory
-	.omem_read(mem_read_EXMEM),
-	.omem_write(mem_write_EXMEM),
-	.oPC(PC_EXMEM),
-	.oIR(IR_EXMEM),	
-	.oRS2(RS2_EXMEM),
-	
-	//goes to write back mux
-	.oalu_res(alu_res_EXMEM),	
-	//write back
-	.omem_to_reg(mem_to_reg_EXMEM),
-	.owrite_addr(write_addr_EXMEM),
-	.opc_to_reg(pc_to_reg_EXMEM),
-	.oreg_write(reg_write_EXMEM));
-
-
-control_unit	con_unit(
-	.IR(instruction_IFID),
-	.branch(branch),
-	.mem_read(mem_read),
-	.mem_to_reg(mem_to_reg),
-	.pc_to_reg(pc_to_reg),
-	.mem_write(mem_write),
-	.alusrc(alusrc),
-	.reg_write(reg_write),
-	.aluop(aluop),
-	.jump(jump),
-	.reg_dest(reg_dest));
-
-
-data_memory	Dmemory(
-	.clk(clk),
-	.reset(reset),
-	.mem_read(mem_read_EXMEM),
-	.mem_write(mem_write_EXMEM),
-	.addr(alu_res_EXMEM),
-
-	.write_data(RS2_EXMEM),
-
-	.read_data(Dmemory_res));
-
-
-extract_reg_adrr	extract_adrr(
-	.IR(instruction_IFID),
-	.addr1(read_address_1),
-	.addr2(read_address_2));
-
-
-mux2to1	alu_src_mux(
-	.select1(alusrc_IDEX),
-	.data1(read_data2_IDEX),
-	.data2(sign_ext_IDEX),
-	//will cahnge the naming after adding the forwarding mux
-	.outputdata(alu_in_2));
-
-MEMWB MEMWB_buffer(
-	//inputs
-	.clock(clk), 
-	.reset(reset),
-
-
-	.imem_to_reg(mem_to_reg_EXMEM),
-	.ipc_to_reg(pc_to_reg_EXMEM),
-
-	.ialu_res(alu_res_EXMEM),
-
-	.ireg_write(reg_write_EXMEM),
-	//inputs part2
-	.iPC(PC_EXMEM),
-	.iIR(instruction_EXMEM),
-	.iwrite_addr(write_addr_EXMEM),
-	.iData_mem_res(Dmemory_res),
-	//outputs
-	// memory
-
-	.oPC(PC_MEMWB),
-	.oIR(IR_MEMWB),	
-
-	
-	//goes to write back mux
-		
-	//write back
-	.oData_mem_res(Dmem_res_MEMWB),
-	.oalu_res(alu_res_MEMWB),
-	.omem_to_reg(mem_to_reg_MEMWB),
-	.owrite_addr(write_addr_MEMWB),
-	.opc_to_reg(pc_to_reg_MEMWB),
-	.oreg_write(reg_write_MEMWB));
-
-mux2to1	writeBack_mux(
-	.select1(mem_to_reg_MEMWB),
-	.data1(alu_res_MEMWB),
-	.data2(Dmem_res_MEMWB),
-	.outputdata(write_back));
-
-
-IR	instruction_memory(
-	.address(intruct_address),
-	.data(instruction));
 
 endmodule
