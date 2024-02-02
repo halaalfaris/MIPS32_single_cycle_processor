@@ -1,29 +1,29 @@
-//revise this. me
-//ask ghaith abt where the outputs go and how many
-//what is the second signal in the OR that is coming from the control unit.
-module hazard_detection(forward, alusrc, SW_or_Branch, src1_ID, src2_ID, dest_EXE,  dest_MEM, Mem_to_Reg_EXE, Mem_to_Reg_MEM, branch_comm, hazard_detected, IR,Mem_to_Reg);
 
-
-  input [4:0] dest_EXE, dest_MEM; //Rd from the pipeline
-  input [31:0] IR;
-  input forward, Mem_to_Reg_EXE, Mem_to_Reg_MEM, alusrc, SW_or_Branch, Mem_to_Reg;
-	input [5:0] branch_comm;
+module hazard_detection(
+  // Inputs:
+  input  [4:0] src1_ID, src2_ID,  // Source registers in ID stage
+  input [4:0] dest_EXE,   // Destination registers in EXE and MEM stages
+  input  mem_read_IDEX,branch, branchYes , // Write-back enable signals for EXE and MEM stages
  
-  output hazard_detected;
-  output [0:4] src1_ID, src2_ID;
   
-  assign branch_type = IR[31:26];
-  assign src1_ID=IR[25:21];
-  assign src2_ID=IR[20:16];
-  wire src2_is_valid, exe_has_hazard, mem_has_hazard, hazard, instr_is_branch;
+  // Output:
+  output  ld_has_hazard,ld_has_hazard_A,ld_has_hazard_B, branch_has_hazard, hazard, hold  // Signal indicating a hazard
+);
 
-  assign src2_is_valid =  (~alusrc) || SW_or_Branch;
+// Detect hazards between ID and EXE stages:
+assign ld_has_hazard_A = (mem_read_IDEX && 
+                         (src1_ID == dest_EXE )); 
 
-  assign exe_has_hazard = Mem_to_Reg_EXE && (src1_ID == dest_EXE || (src2_is_valid && src2_ID == dest_EXE));
-  assign mem_has_hazard = Mem_to_Reg_MEM && (src1_ID == dest_MEM || (src2_is_valid && src2_ID == dest_MEM));
+assign ld_has_hazard_B = (mem_read_IDEX && 
+                         ( src2_ID == dest_EXE)); 
 
-  assign hazard = (exe_has_hazard || mem_has_hazard);
-  assign instr_is_branch = (branch_comm == 6'h6 || branch_comm == 6'h7);  //just add the branching opcodes
+assign branch_has_hazard = (branch && branchYes);
 
-  assign hazard_detected = ~forward ? hazard : (instr_is_branch && hazard) || (Mem_to_Reg && mem_has_hazard); //compare if load-use or branch hazard
-endmodule // hazard_detection
+// Combine hazards:
+assign ld_has_hazard = ld_has_hazard_A ||ld_has_hazard_B ;
+assign hazard = ld_has_hazard_A ||ld_has_hazard_B || branch_has_hazard; 
+assign hold = ld_has_hazard_A||ld_has_hazard_B;
+
+
+
+endmodule

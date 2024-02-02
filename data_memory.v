@@ -7,6 +7,7 @@ module data_memory (addr, write_data, read_data, clk, reset, mem_read, mem_write
 	input clk, reset, mem_read, mem_write;
 	reg [31:0] dmemory [255:0];
 	integer k;
+	
 	//wire [5:0] shifted_addr;
 	//assign shifted_addr=addr[7:2];
 	assign read_data = (mem_read  && (addr<256)) ? dmemory[addr] : 32'bx;

@@ -4,7 +4,8 @@ input [31:0] In1,
 input [31:0] In2,
 output [31:0] result,
 output reg branchYes,
-output reg ov);
+output reg ov,
+output zero);
 
 wire [31:0]temp;
 wire carry;

@@ -1,4 +1,5 @@
 module IR(
+	
     input wire [7:0] address,   // 8-bit address input
     output reg [31:0] data    // 32-bit data output
 );
